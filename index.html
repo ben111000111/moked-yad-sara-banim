@@ -13,6 +13,7 @@
         .slot-btn { @apply w-full mb-1.5 py-2.5 rounded-xl font-bold text-[13px] border transition-all shadow-sm; }
         .slot-free { @apply border-slate-200 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600; }
         .slot-taken { @apply bg-blue-600 border-blue-700 text-white font-bold; }
+        .card { @apply bg-white p-4 rounded-2xl border border-slate-200 shadow-sm h-full; }
     </style>
 </head>
 <body class="min-h-screen pb-20">
@@ -21,15 +22,12 @@
             <img src="logo.png" class="h-14">
             <div>
                 <h1 id="welcomeMsg" class="text-lg font-black text-slate-800 leading-none italic">שלום...</h1>
-                <p id="timeGreeting" class="text-blue-600 font-bold text-xs mt-1 uppercase"></p>
+                <p id="timeGreeting" class="text-blue-600 font-bold text-xs mt-1"></p>
             </div>
         </div>
         <nav class="flex gap-2">
             <a href="index.html" class="nav-link nav-link-active">בית</a>
-            <a href="sabbaths.html" class="nav-link">שבתות</a>
-            <a href="profile.html" class="nav-link bg-blue-50 text-blue-700 border-blue-200">
-                👤 אזור אישי
-            </a>
+            <a href="profile.html" class="nav-link bg-blue-50 text-blue-700 border-blue-200">👤 אזור אישי</a>
         </nav>
     </header>
 
@@ -37,12 +35,15 @@
         <div class="flex justify-between items-center mb-8 bg-white p-4 rounded-3xl border shadow-sm">
             <button onclick="changeWeek(-1)" class="w-10 h-10 border rounded-full hover:bg-slate-50">◀</button>
             <div class="text-center">
-                <h2 class="text-2xl font-black text-slate-800">שיבוץ שבועי</h2>
-                <div id="parashaBadge" class="text-blue-600 font-bold text-sm"></div>
+                <h2 class="text-2xl font-black text-slate-800">סידור עבודה שבועי</h2>
+                <div id="dateRange" class="text-blue-600 font-bold text-sm italic"></div>
             </div>
             <button onclick="changeWeek(1)" class="w-10 h-10 border rounded-full hover:bg-slate-50">▶</button>
         </div>
-        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-6 gap-3"></div>
+
+        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8"></div>
+
+        <div id="weekendGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-8"></div>
     </main>
 
     <div id="modal" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 text-right">
@@ -64,8 +65,6 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz7mg4b1xVkRI_4xVkCdfvt19YHuyUp3iIdW4Voh-1P5Se4DV2YbVLtp-EZkKVfTHR/exec";
         let db = [], anchor = new Date();
 
-        if (!localStorage.getItem('user_auth')) window.location.href = 'login.html';
-
         function updateGreeting() {
             const profile = JSON.parse(localStorage.getItem('user_profile') || '{"name":"מוקדן"}');
             const hour = new Date().getHours();
@@ -84,33 +83,74 @@
 
         function render() {
             const grid = document.getElementById('mainGrid');
-            let start = new Date(anchor); 
-            start.setDate(anchor.getDate() - anchor.getDay());
-            let html = "";
-            const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי'];
+            const weekend = document.getElementById('weekendGrid');
             
-            for(let i=0; i<6; i++) {
-                let d = new Date(start); d.setDate(start.getDate() + i);
+            // מציאת יום ראשון של השבוע הנוכחי
+            let sun = new Date(anchor); 
+            sun.setDate(anchor.getDate() - anchor.getDay());
+            
+            // מוצ"ש (היום שלפני ראשון)
+            let satNight = new Date(sun);
+            satNight.setDate(sun.getDate() - 1);
+
+            document.getElementById('dateRange').innerText = `${sun.toLocaleDateString('he-IL')} - ${new Date(sun.getTime() + 5*86400000).toLocaleDateString('he-IL')}`;
+
+            // 1. רינדור מוצ"ש + ימי חול (ראשון עד חמישי)
+            let mainHtml = "";
+            const WEEKDAYS = ['מוצ"ש', 'ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
+            
+            WEEKDAYS.forEach((dayName, idx) => {
+                let d = new Date(satNight);
+                d.setDate(satNight.getDate() + idx);
                 let dKey = d.toISOString().split('T')[0];
-                html += `<div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                
+                mainHtml += `<div class="card">
                     <div class="text-center border-b pb-2 mb-3">
-                        <div class="font-black text-slate-700">יום ${DAYS[i]}</div>
-                        <div class="text-[10px] text-blue-500">${d.toLocaleDateString('he-IL')}</div>
+                        <div class="font-black text-slate-700">${dayName}</div>
+                        <div class="text-[10px] text-blue-500">${d.getDate()}/${d.getMonth()+1}</div>
                     </div>`;
-                html += renderSlot(dKey, 'morn', 'בוקר', i < 5);
-                html += renderSlot(dKey, 'eve', 'ערב');
-                html += renderSlot(dKey, 'night', 'לילה');
-                html += `</div>`;
-            }
-            grid.innerHTML = html;
+                
+                if(dayName === 'מוצ"ש') {
+                    mainHtml += renderSlot(dKey, 'night', 'לילה');
+                } else {
+                    mainHtml += renderSlot(dKey, 'morn', 'בוקר', true);
+                    mainHtml += renderSlot(dKey, 'eve', 'ערב');
+                    mainHtml += renderSlot(dKey, 'night', 'לילה');
+                }
+                mainHtml += `</div>`;
+            });
+            grid.innerHTML = mainHtml;
+
+            // 2. רינדור שישי שבת
+            let fri = new Date(sun); fri.setDate(sun.getDate() + 5);
+            let friKey = fri.toISOString().split('T')[0];
+            
+            weekend.innerHTML = `
+                <div class="card bg-emerald-50/30">
+                    <div class="text-center border-b pb-2 mb-3 font-black text-emerald-800">יום שישי (8:00-12:00)</div>
+                    <div class="bg-pink-100 text-pink-600 text-xs py-1 px-3 rounded-full font-bold w-fit mx-auto mb-3 italic">בנות בלבד</div>
+                    ${renderSlot(friKey, 'fri_morn', 'בוקר שישי')}
+                </div>
+                <div class="card bg-blue-50/30">
+                    <div class="text-center border-b pb-2 mb-3 font-black text-blue-800">שבת קודש</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${renderSlot(friKey, 'sat_morn', 'בוקר שבת')}
+                        ${renderSlot(friKey, 'sat_night', 'לילה שבת')}
+                    </div>
+                </div>
+            `;
         }
 
-        function renderSlot(date, sid, sname, isGirls) {
+        function renderSlot(date, sid, sname, isGirls = false) {
             const b = db.find(x => x.תאריך === date && x.סוג_משמרת === sid);
-            let html = `<div class="mb-3"><div class="text-[9px] font-black text-slate-400 uppercase">${sname}</div>`;
-            if(isGirls && sid === 'morn') html += `<div class="bg-pink-50 text-pink-400 text-[10px] py-1 text-center font-bold rounded-lg border border-pink-100">בנות</div>`;
-            else if(b) html += `<button class="slot-btn slot-taken">${b.שם_מוקדן}</button>`;
-            else html += `<button onclick="openRequest('${date}','${sid}','${sname}')" class="slot-btn slot-free">+ בקש</button>`;
+            let html = `<div class="mb-3">
+                <div class="text-[9px] font-black text-slate-400 uppercase">${sname}</div>`;
+            
+            if(b) {
+                html += `<button class="slot-btn slot-taken" onclick="alert('טלפון לתיאום: ${b.טלפון}')">${b.שם_מוקדן}</button>`;
+            } else {
+                html += `<button onclick="openRequest('${date}','${sid}','${sname}')" class="slot-btn slot-free">+ בקש</button>`;
+            }
             return html + `</div>`;
         }
 
@@ -125,8 +165,15 @@
 
         async function submit(date, sid) {
             const n = document.getElementById('f-name').value, p = document.getElementById('f-phone').value;
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'add', date, shiftId: sid, name: n, phone: p }) });
-            alert("הבקשה נשלחה בהצלחה!");
+            if(!n || !p) return alert("נא למלא שם וטלפון");
+            
+            document.getElementById('submitBtn').innerText = "...שולח";
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ action: 'add', date, shiftId: sid, name: n, phone: p }) 
+            });
+            alert("הבקשה נשלחה למנהל!");
             location.reload();
         }
 
