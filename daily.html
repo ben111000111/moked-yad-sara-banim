@@ -1,0 +1,20 @@
+async function render() {
+    const grid = document.getElementById('mainGrid');
+    grid.className = "max-w-2xl mx-auto space-y-4";
+    const dKey = anchor.toISOString().split('T')[0];
+    const hRes = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${anchor.getFullYear()}&gm=${anchor.getMonth()+1}&gd=${anchor.getDate()}&g2h=1`);
+    const hData = await hRes.json();
+    document.getElementById('periodTitle').innerText = anchor.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'});
+    document.getElementById('parashaBadge').innerText = hData.hebrew;
+    
+    let shifts = (anchor.getDay() === 6) ? 
+        [{id:'sat_morn', n:'שבת בוקר'}, {id:'sat_night', n:'שבת לילה'}] : 
+        [{id:'morn', n:'בוקר'}, {id:'eve', n:'ערב'}, {id:'night', n:'לילה'}];
+
+    grid.innerHTML = shifts.map(s => `
+        <div class="card p-8">
+            <h3 class="text-2xl font-black mb-6 border-b pb-2 text-blue-800">${s.n}</h3>
+            ${renderSlot(dKey, s.id, s.n, '', hData.hebrew, s.id==='morn' && anchor.getDay()<5)}
+        </div>
+    `).join('');
+}
