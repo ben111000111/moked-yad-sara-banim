@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>שיבוץ מוקד מצוקה יד שרה</title>
-    <link rel="icon" type="image/png" href="https://i.ibb.co/G4vT6X6/image-345ee9.png">
+    <title>שיבוץ שבועי | מוקד יד שרה</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; }
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; }
         * { font-style: normal !important; }
-        .card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; transition: all 0.2s; }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; }
         .slot-btn { @apply w-full mb-1.5 py-2.5 rounded-xl font-bold text-[13px] border transition-all; }
         .slot-free { @apply border-slate-200 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600; }
-        .slot-taken { @apply bg-blue-600 border-blue-700 text-white shadow-sm cursor-pointer; }
-        .nav-btn { @apply px-5 py-2 rounded-xl text-xs font-bold transition-all border border-slate-200 text-slate-500 bg-white; }
-        .nav-btn-active { @apply bg-blue-600 text-white border-blue-600 shadow-md; }
-        .night-label { @apply text-[10px] font-bold text-blue-500 block mb-1; }
-        .girls-label { @apply bg-pink-50 text-pink-400 text-[10px] py-1 text-center font-bold rounded-lg border border-pink-100; }
-        .modal-input { @apply w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold bg-slate-50; }
+        .slot-taken { @apply bg-blue-600 border-blue-700 text-white shadow-sm font-bold; }
+        .nav-link { @apply px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 transition-all; }
+        .nav-link-active { @apply bg-blue-600 text-white border-blue-600; }
     </style>
 </head>
 <body class="min-h-screen pb-20">
@@ -26,206 +23,160 @@
     <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-50 px-6 py-4">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <img src="https://i.ibb.co/G4vT6X6/image-345ee9.png" alt="לוגו" class="h-14">
+                <img src="logo.png" alt="לוגו יד שרה" class="h-14">
                 <div>
-                    <h1 class="text-xl font-black text-slate-800 leading-none uppercase">מוקד מצוקה יד שרה</h1>
-                    <p class="text-blue-600 font-bold text-xs mt-1">ניהול שיבוץ בנים</p>
+                    <h1 class="text-xl font-black text-slate-800 leading-none">מוקד יד שרה</h1>
+                    <p class="text-blue-600 font-bold text-xs mt-1 uppercase">ניהול שיבוץ בנים</p>
                 </div>
             </div>
 
             <div class="flex flex-col items-center">
-                <div id="clock" class="text-2xl font-black text-slate-800 tabular-nums leading-none">00:00:00</div>
-                <div id="topHebDate" class="text-blue-600 font-bold text-[10px] mt-1 uppercase tracking-widest"></div>
+                <div id="clock" class="text-2xl font-black text-slate-800 tabular-nums">00:00:00</div>
+                <div id="topHebDate" class="text-blue-600 font-bold text-[10px] uppercase"></div>
             </div>
 
-            <nav class="flex gap-1.5 bg-slate-100 p-1 rounded-2xl shadow-inner">
-                <button onclick="changeView('daily')" id="v-daily" class="nav-btn">יומי</button>
-                <button onclick="changeView('weekly')" id="v-weekly" class="nav-btn nav-btn-active">שבועי</button>
-                <button onclick="changeView('monthly')" id="v-monthly" class="nav-btn">חודשי</button>
-                <button onclick="changeView('sabbaths')" id="v-sabbaths" class="nav-btn">שבתות</button>
+            <nav class="flex gap-2">
+                <a href="daily.html" class="nav-link">יומי</a>
+                <a href="index.html" class="nav-link nav-link-active">שבועי</a>
+                <a href="monthly.html" class="nav-link">חודשי</a>
+                <a href="sabbaths.html" class="nav-link">שבתות</a>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-8">
-        <div id="navControls" class="flex justify-between items-center mb-8">
-            <button onclick="step(-1)" class="w-12 h-12 flex items-center justify-center bg-white border rounded-full shadow-sm hover:bg-slate-100 transition-all">◀</button>
+        <div class="flex justify-between items-center mb-8">
+            <button onclick="changeWeek(-1)" class="w-12 h-12 bg-white border rounded-full shadow-sm hover:bg-slate-50">◀</button>
             <div class="text-center">
-                <h2 id="periodTitle" class="text-3xl font-black text-slate-800">טוען...</h2>
+                <h2 id="periodTitle" class="text-3xl font-black text-slate-800">שיבוץ שבועי</h2>
                 <div id="parashaBadge" class="mt-1 text-blue-600 font-bold text-lg"></div>
             </div>
-            <button onclick="step(1)" class="w-12 h-12 flex items-center justify-center bg-white border rounded-full shadow-sm hover:bg-slate-100 transition-all">▶</button>
+            <button onclick="changeWeek(1)" class="w-12 h-12 bg-white border rounded-full shadow-sm hover:bg-slate-50">▶</button>
         </div>
 
-        <div id="mainGrid" class="grid gap-6"></div>
+        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-6 gap-3 text-right"></div>
+        <div id="weekendGrid" class="mt-6"></div>
     </main>
 
-    <div id="modal" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl relative border border-white animate-in fade-in zoom-in duration-200">
+    <div id="modal" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 text-right">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl relative border border-white">
             <h3 class="text-2xl font-black text-slate-800 mb-2">בקשת רישום למשמרת</h3>
             <div id="modalInfo" class="bg-blue-50 p-4 rounded-2xl mb-6 text-blue-800 font-bold text-sm border border-blue-100"></div>
             
             <div class="space-y-4">
-                <input id="f-name" type="text" placeholder="שם מלא" class="modal-input">
-                <input id="f-phone" type="tel" placeholder="מספר טלפון" class="modal-input">
-                <textarea id="f-note" placeholder="הערות נוספות (לא חובה)" class="modal-input h-24"></textarea>
+                <label class="block text-xs font-bold text-slate-400 mr-2">שם מלא</label>
+                <input id="f-name" type="text" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 ring-blue-500 font-bold">
+                <label class="block text-xs font-bold text-slate-400 mr-2">מספר טלפון</label>
+                <input id="f-phone" type="tel" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 ring-blue-500 font-bold">
+                <label class="block text-xs font-bold text-slate-400 mr-2">הערה לאחמ"ש</label>
+                <textarea id="f-note" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 ring-blue-500 font-bold h-20"></textarea>
             </div>
 
-            <div id="modalActions" class="mt-8 flex flex-col gap-3">
-                <button id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg hover:bg-blue-700 transition-all">שלח בקשה לאישור</button>
-                <button onclick="closeModal()" class="w-full py-2 text-slate-400 font-bold hover:text-slate-600">ביטול</button>
+            <div class="mt-8 flex flex-col gap-3">
+                <button id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg">שלח בקשה לאישור</button>
+                <button onclick="closeModal()" class="w-full py-2 text-slate-400 font-bold">ביטול</button>
             </div>
         </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxkF_vyCgXxJhlVHUTHnLr_0-S_AowKE5dVhjZ8iHPCzP6lKV3FTJ7bOIYrBzTWEnIY/exec";
-        let db = [], anchor = new Date(), view = 'weekly', hebData = {};
+        let db = [], anchor = new Date();
 
-        // רשימת פרשות קבועה למניעת תקיעות
-        const PARASHOT = {
-            "2026-01-03": "ויחי", "2026-01-10": "שמות", "2026-01-17": "וארא", "2026-01-24": "בא",
-            "2026-01-31": "בשלח", "2026-02-07": "יתרו", "2026-02-14": "משפטים", "2026-02-21": "תרומה",
-            "2026-02-28": "תצוה", "2026-03-07": "כי תשא"
-        };
+        // רשימת פרשות קבועה
+        const PARASHOT = {"2026-01-03": "ויחי", "2026-01-10": "שמות", "2026-01-17": "וארא", "2026-01-24": "בא", "2026-01-31": "בשלח"};
 
-        // שעון ותאריך עברי בראש הדף
         setInterval(async () => {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('he-IL', {hour12:false});
-            if(!window.hebReady) {
+            if(!window.hebSet) {
                 const res = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${now.getFullYear()}&gm=${now.getMonth()+1}&gd=${now.getDate()}&g2h=1`);
                 const data = await res.json();
                 document.getElementById('topHebDate').innerText = data.hebrew;
-                window.hebReady = true;
+                window.hebSet = true;
             }
         }, 1000);
 
-        async function getDayHebrew(date) {
-            const k = date.toISOString().split('T')[0];
-            if(hebData[k]) return hebData[k];
-            const res = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${date.getFullYear()}&gm=${date.getMonth()+1}&gd=${date.getDate()}&g2h=1`);
-            const data = await res.json();
-            hebData[k] = data.hebrew;
-            return data.hebrew;
-        }
-
         async function load() {
-            try { const r = await fetch(SCRIPT_URL); db = await r.json(); render(); } catch(e) { render(); }
+            const r = await fetch(SCRIPT_URL);
+            db = await r.json();
+            render();
         }
 
         async function render() {
             const grid = document.getElementById('mainGrid');
-            grid.innerHTML = '<div class="col-span-full text-center py-20 font-bold opacity-30 animate-pulse text-xl">מעדכן יומן שיבוץ...</div>';
-            document.getElementById('navControls').style.display = (view === 'sabbaths' || view === 'monthly') ? 'none' : 'flex';
-
-            if(view === 'weekly') await renderWeekly(grid);
-            else if(view === 'daily') await renderDaily(grid);
-            else if(view === 'monthly') await renderMonthly(grid);
-            else await renderSabbaths(grid);
-        }
-
-        // --- תצוגה שבועית ---
-        async function renderWeekly(container) {
-            container.className = "flex flex-col gap-8";
-            let start = new Date(anchor); start.setDate(anchor.getDate() - anchor.getDay());
-            document.getElementById('periodTitle').innerText = "שיבוץ שבועי";
+            const weekend = document.getElementById('weekendGrid');
+            grid.innerHTML = 'טוען נתונים...';
             
-            let weekHtml = `<div class="grid grid-cols-1 md:grid-cols-6 gap-3">`;
+            let start = new Date(anchor); start.setDate(anchor.getDate() - anchor.getDay());
+            let html = "";
             const order = [6, 0, 1, 2, 3, 4]; // מוצ"ש עד חמישי
+            
             for(let i of order) {
                 let d = new Date(start); d.setDate(start.getDate() + (i === 6 ? -1 : i));
                 let dKey = d.toISOString().split('T')[0];
-                let hStr = await getDayHebrew(d);
-                weekHtml += `<div class="card p-3">
-                    <div class="text-center border-b pb-2 mb-3"><div class="font-black text-slate-800">${i === 6 ? 'מוצ"ש' : ['ראשון','שני','שלישי','רביעי','חמישי'][i-1] || 'ראשון'}</div><div class="text-[10px] text-blue-600 font-bold">${hStr}</div></div>`;
-                if(i === 6) weekHtml += renderSlot(dKey, 'night', 'לילה', '21:00-08:00', 1, `בין מוצ"ש לראשון`, hStr);
+                let hRes = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${d.getFullYear()}&gm=${d.getMonth()+1}&gd=${d.getDate()}&g2h=1`);
+                let hData = await hRes.json();
+
+                html += `<div class="card p-3">
+                    <div class="text-center border-b pb-2 mb-3">
+                        <div class="font-black text-slate-800">${i === 6 ? 'מוצ"ש' : 'יום ' + ['א','ב','ג','ד','ה'][i]}</div>
+                        <div class="text-[10px] text-blue-600 font-bold">${hData.hebrew}</div>
+                    </div>`;
+                
+                if(i === 6) html += renderSlot(dKey, 'night', 'לילה', 'בין מוצ"ש לראשון', hData.hebrew);
                 else {
-                    weekHtml += renderSlot(dKey, 'morn', 'בוקר', '08:00-15:00', 4, '', hStr, true);
-                    weekHtml += renderSlot(dKey, 'eve', 'ערב', '15:00-21:00', 2, '', hStr);
-                    weekHtml += renderSlot(dKey, 'night', 'לילה', '21:00-08:00', 1, `בין יום ${['א','ב','ג','ד','ה'][i]} ליום הבא`, hStr);
+                    html += renderSlot(dKey, 'morn', 'בוקר', '', hData.hebrew, true);
+                    html += renderSlot(dKey, 'eve', 'ערב', '', hData.hebrew);
+                    html += renderSlot(dKey, 'night', 'לילה', `בין ${['א','ב','ג','ד','ה'][i]} ליום הבא`, hData.hebrew);
                 }
-                weekHtml += `</div>`;
+                html += `</div>`;
             }
-            weekHtml += `</div>`;
+            grid.innerHTML = html;
 
             let sat = new Date(start); sat.setDate(start.getDate() + 6);
             let fri = new Date(start); fri.setDate(start.getDate() + 5);
-            let pName = PARASHOT[sat.toISOString().split('T')[0]] || "פרשת השבוע";
+            let pName = PARASHOT[sat.toISOString().split('T')[0]] || "השבוע";
             document.getElementById('parashaBadge').innerText = "שבת פרשת " + pName;
-
-            let weekendHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-100 p-4 rounded-2xl border border-slate-200">
-                <div class="card p-4 bg-white"><div class="font-black text-blue-800 mb-3 border-b pb-2 text-center text-sm">שישי (בוקר בלבד)</div>${renderSlot(fri.toISOString().split('T')[0], 'fri_morn', 'בוקר', '08:00-12:00', 1, '', 'יום שישי', true)}</div>
-                <div class="card p-4 bg-white"><div class="font-black text-blue-800 mb-3 border-b pb-2 text-center text-sm">שבת (בוקר ולילה)</div><div class="grid grid-cols-2 gap-2">${renderSlot(fri.toISOString().split('T')[0], 'sat_morn', 'שבת בוקר', 'שישי+שבת', 2, '', 'שבת בוקר')}${renderSlot(fri.toISOString().split('T')[0], 'sat_night', 'שבת לילה', 'שישי+שבת', 2, '', 'שבת לילה')}</div></div>
-            </div>`;
-            container.innerHTML = weekHtml + weekendHtml;
-        }
-
-        // --- תצוגה יומית ---
-        async function renderDaily(container) {
-            container.className = "max-w-xl mx-auto space-y-4";
-            let hStr = await getDayHebrew(anchor);
-            document.getElementById('periodTitle').innerText = anchor.toLocaleDateString('he-IL', {weekday:'long', day:'numeric', month:'numeric'});
-            document.getElementById('parashaBadge').innerText = hStr;
-
-            let dKey = anchor.toISOString().split('T')[0];
-            let shifts = (anchor.getDay() === 6) ? [{id:'sat_morn', n:'שבת בוקר'},{id:'sat_night', n:'שבת לילה'}] : [{id:'morn', n:'בוקר'},{id:'eve', n:'ערב'},{id:'night', n:'לילה'}];
             
-            shifts.forEach(s => {
-                container.innerHTML += `<div class="card p-6 shadow-md"><div class="font-black text-lg border-b pb-2 mb-4 text-blue-800">${s.n}</div>${renderSlot(dKey, s.id, s.n, '', 2, '', hStr)}</div>`;
-            });
+            weekend.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-100 p-4 rounded-2xl border">
+                <div class="card p-4 bg-white"><div class="font-black text-center border-b mb-3 text-sm">שישי (בוקר)</div>${renderSlot(fri.toISOString().split('T')[0], 'fri_morn', 'בוקר', '', 'יום שישי', true)}</div>
+                <div class="card p-4 bg-white"><div class="font-black text-center border-b mb-3 text-sm">שבת (בוקר/לילה)</div><div class="grid grid-cols-2 gap-2">${renderSlot(fri.toISOString().split('T')[0], 'sat_morn', 'שבת בוקר', '', 'שבת בוקר')}${renderSlot(fri.toISOString().split('T')[0], 'sat_night', 'שבת לילה', '', 'שבת לילה')}</div></div>
+            </div>`;
         }
 
-        // --- תצוגת שבתות ---
-        async function renderSabbaths(container) {
-            container.className = "max-w-2xl mx-auto space-y-4";
-            document.getElementById('periodTitle').innerText = "שבתות קדימה";
-            document.getElementById('parashaBadge').innerText = "";
-            let sat = new Date(); sat.setDate(sat.getDate() + (6 - sat.getDay()));
-            for(let i=0; i<8; i++) {
-                let d = new Date(sat); d.setDate(sat.getDate() + (i*7));
-                let p = PARASHOT[d.toISOString().split('T')[0]] || "השבוע";
-                container.innerHTML += `<div onclick="anchor=new Date('${d}'); changeView('daily');" class="card p-6 flex justify-between items-center cursor-pointer hover:bg-blue-50"><div><div class="text-xl font-black">שבת פרשת ${p}</div><div class="text-sm text-slate-400">${d.toLocaleDateString('he-IL')}</div></div><div class="text-blue-600 font-bold">צפה בשיבוץ ◀</div></div>`;
-            }
-        }
-
-        // --- לוגיקת משבצת ---
-        function renderSlot(date, sid, sname, stime, slots, nightLabel, hStr, isGirls) {
-            let html = `<div class="mb-3"><div class="flex justify-between items-center px-1 mb-1"><span class="text-[9px] font-black text-slate-500 uppercase">${sname}</span><span class="text-[8px] text-slate-300 font-bold">${stime}</span></div>`;
-            if(nightLabel) html += `<span class="night-label">${nightLabel}</span>`;
-            if(isGirls) html += `<div class="girls-label">בנות</div>`;
+        function renderSlot(date, sid, sname, night, hStr, girls) {
+            let html = `<div class="mb-3"><div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${sname}</div>`;
+            if(night) html += `<div class="text-[9px] font-bold text-blue-500 mb-1 leading-none">${night}</div>`;
+            if(girls) html += `<div class="bg-pink-50 text-pink-400 text-[10px] py-1 text-center font-bold rounded-lg border border-pink-100">בנות</div>`;
             else {
-                for(let j=0; j<slots; j++) {
-                    const b = db.find(x => x.תאריך === date && x.סוג_משמרת === sid);
-                    if(!b) html += `<button onclick="openModal('${date}','${sid}','${sname}','${hStr}','${nightLabel || ''}')" class="slot-btn slot-free">+ בקש שיבוץ</button>`;
-                    else html += `<button onclick="alert('טלפון: ${b.טלפון}')" class="slot-btn slot-taken">${b.שם_מוקדן}</button>`;
-                }
+                const b = db.find(x => x.תאריך === date && x.סוג_משמרת === sid);
+                if(!b) html += `<button onclick="openRequest('${date}','${sid}','${sname}','${hStr}','${night||''}')" class="slot-btn slot-free">+ בקש</button>`;
+                else html += `<button onclick="alert('טלפון: ${b.טלפון}')" class="slot-btn slot-taken">${b.שם_מוקדן}</button>`;
             }
             return html + `</div>`;
         }
 
-        // --- מודאל ---
-        function openModal(date, sid, sname, hStr, night) {
+        function openRequest(date, sid, sname, hStr, night) {
             document.getElementById('modalInfo').innerHTML = `
-                <div class="text-lg">משמרת ${sname}</div>
-                <div class="opacity-80">${date} | ${hStr}</div>
+                <div class="text-xl font-black">${sname}</div>
+                <div class="opacity-80">${hStr} | ${date}</div>
                 ${night ? `<div class="mt-1 text-xs text-blue-500">${night}</div>` : ''}
             `;
-            document.getElementById('submitBtn').onclick = () => submitShift(date, sid);
-            document.getElementById('modal').classList.replace('hidden', 'flex');
+            document.getElementById('submitBtn').onclick = () => submit(date, sid);
+            document.getElementById('modal').classList.remove('hidden');
         }
 
-        async function submitShift(date, sid) {
+        async function submit(date, sid) {
             const n = document.getElementById('f-name').value, p = document.getElementById('f-phone').value;
-            if(!n || !p) return alert("חובה למלא שם וטלפון");
-            document.getElementById('modalActions').innerHTML = "<div class='text-center py-4 font-bold animate-pulse text-blue-600'>שולח בקשה...</div>";
-            await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'add', date, shiftId:sid, name:n, phone:p, note:document.getElementById('f-note').value})});
+            if(!n || !p) return alert("חובה שם וטלפון");
+            document.getElementById('modal').classList.add('opacity-50', 'pointer-events-none');
+            await fetch(SCRIPT_URL, {method:'POST', body: JSON.stringify({action:'add', date, shiftId:sid, name:n, phone:p})});
             location.reload();
         }
 
-        function closeModal() { document.getElementById('modal').classList.replace('flex', 'hidden'); }
-        function changeView(v) { view = v; ['v-daily','v-weekly','v-monthly','v-sabbaths'].forEach(id => document.getElementById(id).classList.toggle('nav-btn-active', id === 'v-'+v)); render(); }
-        function step(d) { anchor.setDate(anchor.getDate() + (view === 'weekly' ? 7 : d)); render(); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function changeWeek(d) { anchor.setDate(anchor.getDate() + (7*d)); render(); }
 
         load();
     </script>
