@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>סידור עבודה | מוקד המוקד</title>
-    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; }
-        .nav-link { @apply px-3 py-2 rounded-xl text-[12px] font-bold border border-slate-200 bg-white flex items-center gap-1 transition-all hover:bg-slate-50; }
-        .nav-link-active { @apply bg-blue-600 text-white border-blue-600; }
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .slot-btn { @apply w-full mb-1.5 py-2.5 rounded-xl font-bold text-[13px] border transition-all shadow-sm; }
         .slot-free { @apply border-slate-200 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600; }
         .slot-taken { @apply bg-blue-600 border-blue-700 text-white font-bold; }
@@ -19,95 +16,112 @@
 <body class="min-h-screen pb-20">
     <script>if(localStorage.getItem('user_auth') !== 'true') window.location.replace('login.html');</script>
 
-    <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center text-right shadow-sm">
+    <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-4">
-            <img id="headerLogo" class="h-14" alt="לוגו המוקד">
+            <img id="headerLogo" class="h-14" alt="לוגו">
             <div>
-                <h1 id="welcomeMsg" class="text-lg font-black text-slate-800 leading-none italic">שלום...</h1>
-                <p id="timeGreeting" class="text-blue-600 font-bold text-xs mt-1 uppercase"></p>
+                <h1 id="welcomeMsg" class="text-lg font-black text-slate-800 italic">שלום...</h1>
+                <p id="timeGreeting" class="text-blue-600 font-bold text-xs uppercase mt-1"></p>
             </div>
         </div>
-
-        <div class="hidden md:flex flex-col items-center">
-            <div id="clock" class="text-2xl font-black text-slate-800 tabular-nums leading-none">00:00:00</div>
-            <div id="topHebDate" class="text-blue-600 font-bold text-[10px] tracking-widest uppercase mt-1">טוען תאריך...</div>
+        <div class="hidden md:flex flex-col items-center italic">
+            <div id="clock" class="text-2xl font-black text-slate-800 tabular-nums">00:00:00</div>
+            <div id="topHebDate" class="text-blue-600 font-bold text-[10px] tracking-widest uppercase">טוען תאריך...</div>
         </div>
-
-        <nav class="flex gap-2">
-            <a href="index.html" class="nav-link nav-link-active">בית</a>
-            <a href="sabbaths.html" class="nav-link">שבתות</a>
-            <a href="profile.html" class="nav-link bg-blue-50 text-blue-700 border-blue-200">👤 אזור אישי</a>
+        <nav class="flex gap-2 font-bold text-xs">
+            <a href="index.html" class="px-3 py-2 bg-blue-600 text-white rounded-xl shadow-md">בית</a>
+            <a href="sabbaths.html" class="px-3 py-2 bg-white border rounded-xl hover:bg-slate-50 transition-all text-slate-600">שבתות</a>
         </nav>
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-8 text-right">
         <div class="flex justify-between items-center mb-8 bg-white p-4 rounded-3xl border shadow-sm">
-            <button onclick="changeWeek(-1)" class="w-10 h-10 border rounded-full hover:bg-slate-50 transition-all">◀</button>
+            <button onclick="changeWeek(-1)" class="w-10 h-10 border rounded-full hover:bg-slate-50 transition-all font-bold">◀</button>
             <div class="text-center">
-                <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">סידור עבודה שבועי</h2>
-                <div id="parashaBadge" class="text-blue-600 font-bold text-sm italic italic">טוען פרשת השבוע...</div>
+                <h2 class="text-2xl font-black text-slate-800 uppercase italic tracking-tight">סידור עבודה שבועי</h2>
+                <div id="parashaBadge" class="text-blue-600 font-extrabold text-sm italic">מחשב פרשה...</div>
             </div>
-            <button onclick="changeWeek(1)" class="w-10 h-10 border rounded-full hover:bg-slate-50 transition-all">▶</button>
+            <button onclick="changeWeek(1)" class="w-10 h-10 border rounded-full hover:bg-slate-50 transition-all font-bold">▶</button>
         </div>
 
         <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8"></div>
-        <div id="weekendGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-8"></div>
+        <div id="weekendGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-8 border-slate-200"></div>
     </main>
 
     <script src="config.js"></script>
     <script>
+        // מאגר פרשות לשלוש שנים: 2025, 2026, 2027
+        const PARASHOT_DB = {
+            // 2025
+            "2025-01-04": "ויגש", "2025-01-11": "ויחי", "2025-01-18": "שמות", "2025-01-25": "וארא",
+            "2025-02-01": "בא", "2025-02-08": "בשלח", "2025-02-15": "יתרו", "2025-02-22": "משפטים",
+            "2025-03-01": "תרומה", "2025-03-08": "תצוה", "2025-03-15": "כי תשא", "2025-03-22": "ויקהל-פקודי", "2025-03-29": "ויקרא",
+            "2025-04-05": "צו", "2025-04-12": "ערב פסח", "2025-04-19": "חול המועד פסח", "2025-04-26": "שמיני",
+            "2025-05-03": "תזריע-מצורע", "2025-05-10": "אחרי מות-קדושים", "2025-05-17": "אמור", "2025-05-24": "בהר-בחוקותי", "2025-05-31": "במדבר",
+            "2025-06-07": "נשא", "2025-06-14": "בהעלותך", "2025-06-21": "שלח", "2025-06-28": "קרח",
+            "2025-07-05": "חקת", "2025-07-12": "בלק", "2025-07-19": "פינחס", "2025-07-26": "מטות-מסעי",
+            "2025-08-02": "דברים", "2025-08-09": "ואתחנן", "2025-08-16": "עקב", "2025-08-23": "ראה", "2025-08-30": "שופטים",
+            "2025-09-06": "כי תצא", "2025-09-13": "כי תבוא", "2025-09-20": "נצבים", "2025-09-27": "וילך",
+            "2025-10-04": "האזינו", "2025-10-11": "חול המועד סוכות", "2025-10-18": "בראשית", "2025-10-25": "נח",
+            "2025-11-01": "לך לך", "2025-11-08": "וירא", "2025-11-15": "חיי שרה", "2025-11-22": "תולדות", "2025-11-29": "ויצא",
+            "2025-12-06": "וישלח", "2025-12-13": "וישב", "2025-12-20": "מקץ", "2025-12-27": "ויגש",
+            // 2026
+            "2026-01-03": "ויחי", "2026-01-10": "שמות", "2026-01-17": "וארא", "2026-01-24": "בא", "2026-01-31": "בשלח",
+            "2026-02-07": "יתרו", "2026-02-14": "משפטים", "2026-02-21": "תרומה", "2026-02-28": "תצוה",
+            "2026-03-07": "כי תשא", "2026-03-14": "ויקהל-פקודי", "2026-03-21": "ויקרא", "2026-03-28": "צו",
+            "2026-04-04": "חול המועד פסח", "2026-04-11": "שמיני", "2026-04-18": "תזריע-מצורע", "2026-04-25": "אחרי מות-קדושים",
+            "2026-05-02": "אמור", "2026-05-09": "בהר-בחוקותי", "2026-05-16": "במדבר", "2026-05-23": "נשא", "2026-05-30": "בהעלותך",
+            "2026-06-06": "שלח", "2026-06-13": "קרח", "2026-06-20": "חקת-בלק", "2026-06-27": "פינחס",
+            "2026-07-04": "מטות-מסעי", "2026-07-11": "דברים", "2026-07-18": "ואתחנן", "2026-07-25": "עקב",
+            "2026-08-01": "ראה", "2026-08-08": "שופטים", "2026-08-15": "כי תצא", "2026-08-22": "כי תבוא", "2026-08-29": "נצבים-וילך",
+            "2026-09-05": "האזינו", "2026-09-12": "ערב ראש השנה", "2026-09-19": "וילך", "2026-09-26": "ערב סוכות",
+            "2026-10-03": "חול המועד סוכות", "2026-10-10": "בראשית", "2026-10-17": "נח", "2026-10-24": "לך לך", "2026-10-31": "וירא",
+            "2026-11-07": "חיי שרה", "2026-11-14": "תולדות", "2026-11-21": "ויצא", "2026-11-28": "וישלח",
+            "2026-12-05": "וישב", "2026-12-12": "מקץ", "2026-12-19": "ויגש", "2026-12-26": "ויחי",
+            // 2027
+            "2027-01-02": "שמות", "2027-01-09": "וארא", "2027-01-16": "בא", "2027-01-23": "בשלח", "2027-01-30": "יתרו",
+            "2027-02-06": "משפטים", "2027-02-13": "תרומה", "2027-02-20": "תצוה", "2027-02-27": "כי תשא",
+            "2027-03-06": "ויקהל", "2027-03-13": "פקודי", "2027-03-20": "ויקרא", "2027-03-27": "צו",
+            "2027-04-03": "שמיני", "2027-04-10": "תזריע", "2027-04-17": "מצורע", "2027-04-24": "חול המועד פסח",
+            "2027-05-01": "אחרי מות", "2027-05-08": "קדושים", "2027-05-15": "אמור", "2027-05-22": "בהר", "2027-05-29": "בחוקותי",
+            "2027-06-05": "במדבר", "2027-06-12": "נשא", "2027-06-19": "בהעלותך", "2027-06-26": "שלח",
+            "2027-07-03": "קרח", "2027-07-10": "חקת", "2027-07-17": "בלק", "2027-07-24": "פינחס", "2027-07-31": "מטות",
+            "2027-08-07": "מסעי", "2027-08-14": "דברים", "2027-08-21": "ואתחנן", "2027-08-28": "עקב",
+            "2027-09-04": "ראה", "2027-09-11": "שופטים", "2027-09-18": "כי תצא", "2027-09-25": "כי תבוא",
+            "2027-10-02": "נצבים-וילך", "2027-10-09": "האזינו", "2027-10-16": "סוכות", "2027-10-23": "בראשית", "2027-10-30": "נח",
+            "2027-11-06": "לך לך", "2027-11-13": "וירא", "2027-11-20": "חיי שרה", "2027-11-27": "תולדות",
+            "2027-12-04": "ויצא", "2027-12-11": "וישלח", "2027-12-18": "וישב", "2027-12-25": "מקץ"
+        };
+
         let db = [], anchor = new Date();
 
-        // הגדרת לוגו מה-config
         if (document.getElementById('headerLogo')) {
             document.getElementById('headerLogo').src = CONFIG.LOGO_FILENAME || 'logo.png';
         }
 
-        // שעון ותאריך עברי
-        setInterval(async () => {
+        setInterval(() => {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('he-IL', {hour12:false});
             if(!window.hebSet) {
-                try {
-                    const res = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${now.getFullYear()}&gm=${now.getMonth()+1}&gd=${now.getDate()}&g2h=1`);
-                    const data = await res.json();
-                    document.getElementById('topHebDate').innerText = data.hebrew;
-                    window.hebSet = true;
-                } catch(e) {}
+                fetch(`https://www.hebcal.com/converter?cfg=json&gy=${now.getFullYear()}&gm=${now.getMonth()+1}&gd=${now.getDate()}&g2h=1`)
+                    .then(r => r.json()).then(d => { document.getElementById('topHebDate').innerText = d.hebrew; window.hebSet = true; });
             }
         }, 1000);
 
-        function updateGreeting() {
-            const profile = JSON.parse(localStorage.getItem('user_profile') || '{"name":"מוקדן"}');
-            const hour = new Date().getHours();
-            let greet = hour < 5 || hour >= 21 ? "לילה טוב" : hour < 12 ? "בוקר טוב" : hour < 17 ? "צהריים טובים" : "ערב טוב";
-            document.getElementById('welcomeMsg').innerText = `שלום, ${profile.name}`;
-            document.getElementById('timeGreeting').innerText = greet;
-        }
-
-        async function fetchParasha(date) {
-            try {
-                // מציאת השבת הקרובה לתאריך העוגן
-                let sat = new Date(date);
-                sat.setDate(date.getDate() + (6 - date.getDay()));
-                const satKey = sat.toISOString().split('T')[0];
-                
-                const res = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&year=${sat.getFullYear()}&month=${sat.getMonth()+1}&ss=on&mf=on`);
-                const data = await res.json();
-                
-                const parasha = data.items.find(item => item.category === "parashat" && item.date === satKey);
-                document.getElementById('parashaBadge').innerText = parasha ? `שבת פרשת ${parasha.hebrew}` : "שבת פרשת השבוע";
-            } catch (e) {
-                document.getElementById('parashaBadge').innerText = "שבת פרשת השבוע";
-            }
+        function updateParasha(date) {
+            let sat = new Date(date);
+            sat.setDate(date.getDate() + (6 - date.getDay()));
+            const key = sat.toISOString().split('T')[0];
+            const name = PARASHOT_DB[key] || "פרשת השבוע";
+            document.getElementById('parashaBadge').innerText = `שבת פרשת ${name}`;
         }
 
         async function load() {
+            updateParasha(anchor);
             try {
                 const r = await fetch(CONFIG.SCRIPT_URL);
                 db = await r.json();
                 render();
-                fetchParasha(anchor);
             } catch(e) { console.error(e); }
         }
 
@@ -121,10 +135,9 @@
             for(let i=0; i<6; i++) {
                 let d = new Date(satNight); d.setDate(satNight.getDate() + i);
                 let dKey = d.toISOString().split('T')[0];
-                mainHtml += `<div class="card"><div class="text-center border-b pb-2 mb-3"><div class="font-black text-slate-700 uppercase italic">${WEEKDAYS[i]}</div></div>`;
-                if(WEEKDAYS[i] === 'מוצ"ש') {
-                    mainHtml += renderSlot(dKey, 'night', 'לילה');
-                } else {
+                mainHtml += `<div class="card"><div class="text-center border-b pb-2 mb-3"><div class="font-black text-slate-700 italic">${WEEKDAYS[i]}</div><div class="text-[9px] text-blue-500 font-bold">${d.getDate()}/${d.getMonth()+1}</div></div>`;
+                if(WEEKDAYS[i] === 'מוצ"ש') mainHtml += renderSlot(dKey, 'night', 'לילה');
+                else {
                     mainHtml += renderSlot(dKey, 'morn', 'בוקר', i < 5);
                     mainHtml += renderSlot(dKey, 'eve', 'ערב');
                     mainHtml += renderSlot(dKey, 'night', 'לילה');
@@ -132,42 +145,38 @@
                 mainHtml += `</div>`;
             }
             grid.innerHTML = mainHtml;
-            loadWeekend(sun);
+            renderWeekend(sun);
         }
 
-        function loadWeekend(sun) {
-            const weekend = document.getElementById('weekendGrid');
+        function renderWeekend(sun) {
             let fri = new Date(sun); fri.setDate(sun.getDate() + 5);
             let friKey = fri.toISOString().split('T')[0];
-            weekend.innerHTML = `
-                <div class="card bg-emerald-50/30">
-                    <div class="text-center border-b pb-2 mb-3 font-black text-emerald-800 uppercase text-xs">יום שישי (8:00-12:00)</div>
+            document.getElementById('weekendGrid').innerHTML = `
+                <div class="card bg-emerald-50/20 border-emerald-100">
+                    <div class="text-center border-b border-emerald-100 pb-2 mb-3 font-black text-emerald-800 text-xs italic">יום שישי (8:00-12:00)</div>
                     ${renderSlot(friKey, 'fri_morn', 'בוקר שישי', false, true)}
                 </div>
-                <div class="card bg-blue-50/30">
-                    <div class="text-center border-b pb-2 mb-3 font-black text-blue-800 uppercase text-xs">שבת קודש</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        ${renderSlot(friKey, 'sat_morn', 'בוקר שבת')}
-                        ${renderSlot(friKey, 'sat_night', 'לילה שבת')}
-                    </div>
+                <div class="card bg-blue-50/20 border-blue-100">
+                    <div class="text-center border-b border-blue-100 pb-2 mb-3 font-black text-blue-800 text-xs italic">שבת קודש</div>
+                    <div class="grid grid-cols-2 gap-2">${renderSlot(friKey, 'sat_morn', 'בוקר שבת')}${renderSlot(friKey, 'sat_night', 'לילה שבת')}</div>
                 </div>`;
         }
 
         function renderSlot(date, sid, sname, isMorn, isGirls) {
             const b = db.find(x => x.תאריך === date && x.סוג_משמרת === sid);
-            let html = `<div class="mb-3 text-right"><div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${sname}</div>`;
-            if(isGirls) html += `<div class="bg-pink-50 text-pink-400 text-[10px] py-1 text-center font-bold rounded-lg border border-pink-100 mb-1 italic">בנות בלבד</div>`;
-            if(b) html += `<button class="slot-btn slot-taken" onclick="alert('טלפון: ${b.טלפון}')">${b.שם_מוקדן}</button>`;
-            else html += `<button class="slot-btn slot-free" onclick="window.location.href='index.html'">+ פנוי</button>`;
+            let html = `<div class="mb-3"><div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${sname}</div>`;
+            if(isGirls) html += `<div class="bg-pink-100 text-pink-600 text-[8px] py-0.5 text-center font-bold rounded-md mb-1 italic">בנות בלבד</div>`;
+            if(b) html += `<button class="slot-btn slot-taken" title="${b.טלפון}">${b.שם_מוקדן}</button>`;
+            else html += `<button class="slot-btn slot-free">+ פנוי</button>`;
             return html + `</div>`;
         }
 
-        function changeWeek(d) { 
-            anchor.setDate(anchor.getDate() + (7*d)); 
-            load(); 
-        }
-
-        updateGreeting(); load();
+        function changeWeek(d) { anchor.setDate(anchor.getDate() + (7*d)); load(); }
+        
+        const profile = JSON.parse(localStorage.getItem('user_profile') || '{"name":"מוקדן"}');
+        document.getElementById('welcomeMsg').innerText = `שלום, ${profile.name}`;
+        
+        load();
     </script>
 </body>
 </html>
