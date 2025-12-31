@@ -8,32 +8,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
 </head>
 <body class="bg-slate-50 font-['Assistant'] flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200 text-right">
+    <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200 text-right text-slate-800">
         <div class="text-center mb-8">
             <img src="logo.png" alt="לוגו" class="h-20 mx-auto mb-4">
-            <h1 id="authTitle" class="text-2xl font-black text-slate-800">כניסה למערכת</h1>
+            <h1 id="authTitle" class="text-2xl font-black">כניסה למערכת</h1>
         </div>
         
+        <div id="errorMessage" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded-xl text-sm font-bold text-center border border-red-200"></div>
+
         <form id="authForm" class="space-y-4">
             <div id="registerFields" class="hidden space-y-4">
-                <input type="tel" id="regPhone" placeholder="מספר טלפון" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500">
-                <input type="email" id="email" placeholder="אימייל" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500">
+                <input type="tel" id="regPhone" placeholder="מספר טלפון" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500 text-right">
+                <input type="email" id="email" placeholder="אימייל" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500 text-right">
             </div>
-            <input type="text" id="username" placeholder="שם מלא" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500" required>
-            <input type="password" id="password" placeholder="סיסמה" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500" required>
+            <input type="text" id="username" placeholder="שם מלא" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500 text-right" required>
+            <input type="password" id="password" placeholder="סיסמה" class="w-full p-3 rounded-xl border font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500 text-right" required>
             
             <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg hover:bg-blue-700 transition-all">התחברות</button>
         </form>
         
-        <button onclick="toggleAuth()" id="toggleBtn" class="w-full mt-6 text-slate-500 font-bold text-sm">אין לך חשבון? הירשם כאן</button>
+        <button onclick="toggleAuth()" id="toggleBtn" class="w-full mt-6 text-slate-500 font-bold text-sm hover:underline text-center">אין לך חשבון? הירשם כאן</button>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz7mg4b1xVkRI_4xVkCdfvt19YHuyUp3iIdW4Voh-1P5Se4DV2YbVLtp-EZkKVfTHR/exec";
         let isRegister = false;
 
         function toggleAuth() {
             isRegister = !isRegister;
+            document.getElementById('errorMessage').classList.add('hidden');
             document.getElementById('authTitle').innerText = isRegister ? 'רישום מוקדן חדש' : 'כניסה למערכת';
             document.getElementById('registerFields').classList.toggle('hidden');
             document.getElementById('submitBtn').innerText = isRegister ? 'בצע רישום' : 'התחברות';
@@ -42,26 +45,38 @@
 
         document.getElementById('authForm').onsubmit = async (e) => {
             e.preventDefault();
-            const name = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            
-            if (isRegister) {
-                const phone = document.getElementById('regPhone').value;
-                const email = document.getElementById('email').value;
-                try {
-                    await fetch(SCRIPT_URL, { 
-                        method: 'POST', 
-                        mode: 'no-cors',
-                        body: JSON.stringify({ action: 'register', name, password: pass, phone, email }) 
-                    });
-                    localStorage.setItem('user_profile', JSON.stringify({ name, phone }));
-                } catch(err) { console.error(err); }
-            } else {
-                localStorage.setItem('user_profile', JSON.stringify({ name: name }));
+            const btn = document.getElementById('submitBtn');
+            const errDiv = document.getElementById('errorMessage');
+            btn.disabled = true; btn.innerText = "מעבד..."; errDiv.classList.add('hidden');
+
+            const payload = {
+                action: isRegister ? 'register' : 'login',
+                name: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                phone: document.getElementById('regPhone').value,
+                email: document.getElementById('email').value
+            };
+
+            try {
+                const response = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await response.text();
+
+                if (result.includes("success")) {
+                    let userObj = { name: payload.name, phone: payload.phone };
+                    if (!isRegister) {
+                        try { const data = JSON.parse(result); userObj = data.user; } catch(e) {}
+                    }
+                    localStorage.setItem('user_profile', JSON.stringify(userObj));
+                    localStorage.setItem('user_auth', 'true');
+                    window.location.href = 'index.html';
+                } else {
+                    errDiv.innerText = result; errDiv.classList.remove('hidden');
+                    btn.disabled = false; btn.innerText = isRegister ? 'בצע רישום' : 'התחברות';
+                }
+            } catch (err) {
+                errDiv.innerText = "שגיאת תקשורת עם השרת"; errDiv.classList.remove('hidden');
+                btn.disabled = false;
             }
-            
-            localStorage.setItem('user_auth', 'true');
-            window.location.href = 'index.html';
         };
     </script>
 </body>
