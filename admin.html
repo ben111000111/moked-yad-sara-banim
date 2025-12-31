@@ -2,141 +2,42 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ניהול מוקד | פאנל מנהל</title>
+    <title>ניהול | פאנל אחמש</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Assistant', sans-serif; background-color: #f1f5f9; }
-        .stat-card { @apply bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm text-center transition-transform hover:scale-105; }
-    </style>
+    <style>body { font-family: 'Assistant', sans-serif; background-color: #f1f5f9; } * { font-style: normal !important; }</style>
 </head>
-<body class="min-h-screen pb-20">
-
-    <header class="bg-slate-900 text-white p-6 sticky top-0 z-50 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
-        <div class="flex items-center gap-4">
-            <div class="bg-blue-600 px-3 py-1 rounded-full font-black text-[10px] tracking-widest">ADMIN PANEL</div>
-            <h1 class="text-xl font-black italic">ניהול שיבוצי מוקד</h1>
+<body class="min-h-screen">
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl text-center">
+            <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase">ניהול מוקד</h2>
+            <input type="password" id="passInput" placeholder="סיסמה" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-center text-xl outline-none mb-6">
+            <button onclick="check()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl">כניסה</button>
         </div>
-        <div class="flex flex-wrap justify-center gap-3">
-            <a href="report.html" class="px-4 py-2 bg-emerald-600 rounded-xl text-xs font-bold shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2">📋 הפק דו"ח שבועי</a>
-            <a href="index.html" class="px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 transition-all">🏠 אתר מוקדנים</a>
-            <button onclick="loadAdminData()" class="px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold shadow-lg">🔄 רענן</button>
-        </div>
-    </header>
-
-    <main class="max-w-6xl mx-auto p-6 space-y-8 text-right">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="stat-card border-b-4 border-blue-500">
-                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">בקשות ממתינות</div>
-                <div id="pendingCount" class="text-4xl font-black text-slate-800 mt-2">0</div>
+    </div>
+    <div id="adminContent" class="hidden opacity-0 transition-opacity duration-1000">
+        <header class="bg-slate-900 text-white p-6 sticky top-0 z-50 flex justify-between items-center shadow-xl">
+            <h1 class="text-xl font-black">ניהול שיבוצים</h1>
+            <button onclick="load()" class="px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold uppercase">רענן</button>
+        </header>
+        <main class="max-w-6xl mx-auto p-6 text-right">
+            <div class="bg-white rounded-[2.5rem] shadow-sm border overflow-hidden">
+                <div class="p-6 border-b bg-slate-50 font-black text-xl">בקשות ממתינות</div>
+                <table class="w-full text-right"><thead class="bg-slate-50 text-[11px] font-black text-slate-400 uppercase border-b"><th class="p-5">תאריך</th><th class="p-5">משמרת</th><th class="p-5">מוקדן</th><th class="p-5 text-center">פעולה</th></thead><tbody id="table" class="text-sm font-bold"></tbody></table>
             </div>
-            <div class="stat-card border-b-4 border-emerald-500">
-                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">שיבוצים מאושרים</div>
-                <div id="approvedCount" class="text-4xl font-black text-slate-800 mt-2">0</div>
-            </div>
-            <div class="stat-card border-b-4 border-indigo-500">
-                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">מוקדנים פעילים</div>
-                <div id="activeUsers" class="text-4xl font-black text-slate-800 mt-2">0</div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-xl font-black text-slate-800 italic">בקשות שיבוץ לאישור</h2>
-                <div class="flex gap-2">
-                    <span class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase">זמן אמת</span>
-                </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-right">
-                    <thead>
-                        <tr class="text-[11px] font-black text-slate-400 uppercase bg-slate-50 border-b">
-                            <th class="p-5">תאריך</th>
-                            <th class="p-5">משמרת</th>
-                            <th class="p-5">מוקדן</th>
-                            <th class="p-5">טלפון</th>
-                            <th class="p-5 text-center">סטטוס/פעולה</th>
-                        </tr>
-                    </thead>
-                    <tbody id="requestTable" class="text-sm font-bold text-slate-700">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl text-white font-black shadow-2xl opacity-0 transition-all pointer-events-none z-[100]"></div>
-
+        </main>
+    </div>
     <script src="config.js"></script>
     <script>
-        async function loadAdminData() {
-            const table = document.getElementById('requestTable');
-            table.innerHTML = '<tr><td colspan="5" class="p-10 text-center opacity-30">טוען נתונים...</td></tr>';
-            
+        function check() { if(document.getElementById('passInput').value === CONFIG.ADMIN_PASSWORD) { document.getElementById('loginOverlay').style.display='none'; document.getElementById('adminContent').classList.remove('hidden'); setTimeout(()=>document.getElementById('adminContent').classList.add('opacity-100'),10); load(); } else alert("טעות"); }
+        async function load() {
+            const t = document.getElementById('table'); t.innerHTML = '<tr><td colspan="4" class="p-10 text-center opacity-30">טוען...</td></tr>';
             try {
-                const res = await fetch(CONFIG.SCRIPT_URL);
-                const data = await res.json();
-                
-                // עדכון סטטיסטיקה
-                const pending = data.requests.filter(r => r.סטטוס === 'ממתין');
-                const approved = data.schedule.length;
-                const users = [...new Set(data.requests.map(r => r.שם_מוקדן))].length;
-
-                document.getElementById('pendingCount').innerText = pending.length;
-                document.getElementById('approvedCount').innerText = approved;
-                document.getElementById('activeUsers').innerText = users;
-
-                // רינדור טבלה
-                if (pending.length === 0) {
-                    table.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-300 font-bold">אין בקשות חדשות כרגע</td></tr>';
-                    return;
-                }
-
-                table.innerHTML = pending.map(r => `
-                    <tr class="border-b hover:bg-slate-50 transition-colors">
-                        <td class="p-5">${r.תאריך}</td>
-                        <td class="p-5 font-black text-blue-600">${r.סוג_משמרת}</td>
-                        <td class="p-5 text-slate-900">${r.שם_מוקדן}</td>
-                        <td class="p-5 text-slate-400">${r.טלפון}</td>
-                        <td class="p-5 text-center">
-                            <button onclick="approve('${r.תאריך}', '${r.סוג_משמרת}', '${r.שם_מוקדן}', '${r.טלפון}')" 
-                                class="bg-emerald-500 text-white px-5 py-2 rounded-xl text-xs font-black shadow-md hover:bg-emerald-600 transition-all active:scale-90">
-                                אשר שיבוץ ✅
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-
-            } catch (e) {
-                table.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500">שגיאה בטעינה. בדוק חיבור לשרת.</td></tr>';
-            }
+                const r = await fetch(CONFIG.SCRIPT_URL); const d = await r.json(); const p = (d.requests || []).filter(x => x.סטטוס === 'ממתין');
+                t.innerHTML = p.map(x => `<tr class="border-b"><td class="p-5">${x.תאריך}</td><td class="p-5 text-blue-600">${x.סוג_משמרת}</td><td class="p-5">${x.שם_מוקדן}</td><td class="p-5 text-center"><button onclick="app('${x.תאריך}','${x.סוג_משמרת}','${x.שם_מוקדן}')" class="bg-emerald-500 text-white px-5 py-2 rounded-xl text-xs font-black">אשר ✅</button></td></tr>`).join('') || '<tr><td colspan="4" class="p-20 text-center text-slate-300">אין בקשות</td></tr>';
+            } catch(e) {}
         }
-
-        async function approve(date, shift, name, phone) {
-            showToast("מעבד אישור...", "#3b82f6");
-            try {
-                await fetch(CONFIG.SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ action: 'approve', date, shiftId: shift, name, phone })
-                });
-                showToast("השיבוץ אושר ונוסף ללוח!", "#10b981");
-                setTimeout(loadAdminData, 1000);
-            } catch (e) {
-                showToast("שגיאה בתקשורת", "#ef4444");
-            }
-        }
-
-        function showToast(m, c) {
-            const t = document.getElementById('toast');
-            t.innerText = m; t.style.backgroundColor = c;
-            t.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 3000);
-        }
-
-        loadAdminData();
+        async function app(d,s,n) { await fetch(CONFIG.SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify({action:'approve',date:d,shiftId:s,name:n})}); alert("אושר"); load(); }
     </script>
 </body>
 </html>
