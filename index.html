@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; }
         .nav-link { @apply px-3 py-2 rounded-xl text-[12px] font-bold border border-slate-200 bg-white flex items-center gap-1 transition-all; }
         .nav-link-active { @apply bg-blue-600 text-white border-blue-600; }
         .slot-btn { @apply w-full mb-1.5 py-2.5 rounded-xl font-bold text-[13px] border transition-all shadow-sm; }
@@ -25,8 +25,15 @@
                 <p id="timeGreeting" class="text-blue-600 font-bold text-xs mt-1"></p>
             </div>
         </div>
+
+        <div class="hidden md:flex flex-col items-center">
+            <div id="clock" class="text-2xl font-black text-slate-800 tabular-nums">00:00:00</div>
+            <div id="topHebDate" class="text-blue-600 font-bold text-[10px] uppercase tracking-widest">טוען תאריך עברי...</div>
+        </div>
+
         <nav class="flex gap-2">
             <a href="index.html" class="nav-link nav-link-active">בית</a>
+            <a href="sabbaths.html" class="nav-link">שבתות</a>
             <a href="profile.html" class="nav-link bg-blue-50 text-blue-700 border-blue-200">👤 אזור אישי</a>
         </nav>
     </header>
@@ -36,13 +43,12 @@
             <button onclick="changeWeek(-1)" class="w-10 h-10 border rounded-full hover:bg-slate-50">◀</button>
             <div class="text-center">
                 <h2 class="text-2xl font-black text-slate-800">סידור עבודה שבועי</h2>
-                <div id="dateRange" class="text-blue-600 font-bold text-sm italic"></div>
+                <div id="parashaBadge" class="text-blue-600 font-bold text-sm italic">טוען פרשה...</div>
             </div>
             <button onclick="changeWeek(1)" class="w-10 h-10 border rounded-full hover:bg-slate-50">▶</button>
         </div>
 
         <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8"></div>
-
         <div id="weekendGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-8"></div>
     </main>
 
@@ -65,6 +71,9 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz7mg4b1xVkRI_4xVkCdfvt19YHuyUp3iIdW4Voh-1P5Se4DV2YbVLtp-EZkKVfTHR/exec";
         let db = [], anchor = new Date();
 
+        // רשימת פרשות מובנית למקרה של תקלה ב-API
+        const PARASHOT_FALLBACK = {"2026-01-03":"ויחי", "2026-01-10":"שמות", "2026-01-17":"וארא", "2026-01-24":"בא", "2026-01-31":"בשלח"};
+
         function updateGreeting() {
             const profile = JSON.parse(localStorage.getItem('user_profile') || '{"name":"מוקדן"}');
             const hour = new Date().getHours();
@@ -72,6 +81,20 @@
             document.getElementById('welcomeMsg').innerText = `שלום, ${profile.name}`;
             document.getElementById('timeGreeting').innerText = greet;
         }
+
+        // שעון ותאריך עברי
+        setInterval(async () => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('he-IL', {hour12:false});
+            if(!window.hebSet) {
+                try {
+                    const res = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${now.getFullYear()}&gm=${now.getMonth()+1}&gd=${now.getDate()}&g2h=1`);
+                    const data = await res.json();
+                    document.getElementById('topHebDate').innerText = data.hebrew;
+                    window.hebSet = true;
+                } catch(e) {}
+            }
+        }, 1000);
 
         async function load() {
             try {
@@ -81,55 +104,60 @@
             } catch(e) { console.error("Error loading data", e); }
         }
 
-        function render() {
+        async function render() {
             const grid = document.getElementById('mainGrid');
             const weekend = document.getElementById('weekendGrid');
             
-            // מציאת יום ראשון של השבוע הנוכחי
             let sun = new Date(anchor); 
             sun.setDate(anchor.getDate() - anchor.getDay());
-            
-            // מוצ"ש (היום שלפני ראשון)
             let satNight = new Date(sun);
             satNight.setDate(sun.getDate() - 1);
 
-            document.getElementById('dateRange').innerText = `${sun.toLocaleDateString('he-IL')} - ${new Date(sun.getTime() + 5*86400000).toLocaleDateString('he-IL')}`;
+            // עדכון פרשה
+            let sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+            let satKey = sat.toISOString().split('T')[0];
+            try {
+                const pRes = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&year=${sat.getFullYear()}&month=${sat.getMonth()+1}`);
+                const pData = await pRes.json();
+                const item = pData.items.find(i => i.category === "parashat" && i.date === satKey);
+                document.getElementById('parashaBadge').innerText = item ? `שבת פרשת ${item.hebrew}` : `שבת פרשת ${PARASHOT_FALLBACK[satKey] || "השבוע"}`;
+            } catch(e) {
+                document.getElementById('parashaBadge').innerText = `שבת פרשת ${PARASHOT_FALLBACK[satKey] || "השבוע"}`;
+            }
 
-            // 1. רינדור מוצ"ש + ימי חול (ראשון עד חמישי)
+            // 1. מוצ"ש + א-ה
             let mainHtml = "";
             const WEEKDAYS = ['מוצ"ש', 'ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
-            
-            WEEKDAYS.forEach((dayName, idx) => {
-                let d = new Date(satNight);
-                d.setDate(satNight.getDate() + idx);
+            for(let i=0; i<6; i++) {
+                let d = new Date(satNight); d.setDate(satNight.getDate() + i);
                 let dKey = d.toISOString().split('T')[0];
-                
+                const hRes = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${d.getFullYear()}&gm=${d.getMonth()+1}&gd=${d.getDate()}&g2h=1`);
+                const hData = await hRes.json();
+
                 mainHtml += `<div class="card">
                     <div class="text-center border-b pb-2 mb-3">
-                        <div class="font-black text-slate-700">${dayName}</div>
-                        <div class="text-[10px] text-blue-500">${d.getDate()}/${d.getMonth()+1}</div>
+                        <div class="font-black text-slate-700">${WEEKDAYS[i]}</div>
+                        <div class="text-[10px] text-blue-500 font-bold">${hData.hebrew}</div>
                     </div>`;
                 
-                if(dayName === 'מוצ"ש') {
-                    mainHtml += renderSlot(dKey, 'night', 'לילה');
+                if(WEEKDAYS[i] === 'מוצ"ש') {
+                    mainHtml += renderSlot(dKey, 'night', 'לילה', 'מוצ"ש לראשון');
                 } else {
-                    mainHtml += renderSlot(dKey, 'morn', 'בוקר', true);
+                    mainHtml += renderSlot(dKey, 'morn', 'בוקר', '', i < 5);
                     mainHtml += renderSlot(dKey, 'eve', 'ערב');
-                    mainHtml += renderSlot(dKey, 'night', 'לילה');
+                    mainHtml += renderSlot(dKey, 'night', 'לילה', `${WEEKDAYS[i]} ל${WEEKDAYS[i+1] || 'שישי'}`);
                 }
                 mainHtml += `</div>`;
-            });
+            }
             grid.innerHTML = mainHtml;
 
-            // 2. רינדור שישי שבת
+            // 2. שישי שבת
             let fri = new Date(sun); fri.setDate(sun.getDate() + 5);
             let friKey = fri.toISOString().split('T')[0];
-            
             weekend.innerHTML = `
                 <div class="card bg-emerald-50/30">
                     <div class="text-center border-b pb-2 mb-3 font-black text-emerald-800">יום שישי (8:00-12:00)</div>
-                    <div class="bg-pink-100 text-pink-600 text-xs py-1 px-3 rounded-full font-bold w-fit mx-auto mb-3 italic">בנות בלבד</div>
-                    ${renderSlot(friKey, 'fri_morn', 'בוקר שישי')}
+                    ${renderSlot(friKey, 'fri_morn', 'בוקר שישי', '', true)}
                 </div>
                 <div class="card bg-blue-50/30">
                     <div class="text-center border-b pb-2 mb-3 font-black text-blue-800">שבת קודש</div>
@@ -137,20 +165,16 @@
                         ${renderSlot(friKey, 'sat_morn', 'בוקר שבת')}
                         ${renderSlot(friKey, 'sat_night', 'לילה שבת')}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
-        function renderSlot(date, sid, sname, isGirls = false) {
+        function renderSlot(date, sid, sname, night, girls) {
             const b = db.find(x => x.תאריך === date && x.סוג_משמרת === sid);
-            let html = `<div class="mb-3">
-                <div class="text-[9px] font-black text-slate-400 uppercase">${sname}</div>`;
-            
-            if(b) {
-                html += `<button class="slot-btn slot-taken" onclick="alert('טלפון לתיאום: ${b.טלפון}')">${b.שם_מוקדן}</button>`;
-            } else {
-                html += `<button onclick="openRequest('${date}','${sid}','${sname}')" class="slot-btn slot-free">+ בקש</button>`;
-            }
+            let html = `<div class="mb-3"><div class="text-[9px] font-black text-slate-400 uppercase">${sname}</div>`;
+            if(night) html += `<div class="text-[9px] font-bold text-blue-500 mb-1 leading-none">${night}</div>`;
+            if(girls && (sname.includes('בוקר') || sid === 'morn')) html += `<div class="bg-pink-50 text-pink-400 text-[10px] py-1 text-center font-bold rounded-lg border border-pink-100">בנות</div>`;
+            else if(b) html += `<button class="slot-btn slot-taken" onclick="alert('טלפון: ${b.טלפון}')">${b.שם_מוקדן}</button>`;
+            else html += `<button onclick="openRequest('${date}','${sid}','${sname}')" class="slot-btn slot-free">+ בקש</button>`;
             return html + `</div>`;
         }
 
@@ -166,14 +190,9 @@
         async function submit(date, sid) {
             const n = document.getElementById('f-name').value, p = document.getElementById('f-phone').value;
             if(!n || !p) return alert("נא למלא שם וטלפון");
-            
             document.getElementById('submitBtn').innerText = "...שולח";
-            await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ action: 'add', date, shiftId: sid, name: n, phone: p }) 
-            });
-            alert("הבקשה נשלחה למנהל!");
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'add', date, shiftId: sid, name: n, phone: p }) });
+            alert("הבקשה נשלחה!");
             location.reload();
         }
 
