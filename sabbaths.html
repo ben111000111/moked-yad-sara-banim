@@ -1,0 +1,20 @@
+async function render() {
+    const grid = document.getElementById('mainGrid');
+    grid.className = "max-w-3xl mx-auto space-y-4";
+    document.getElementById('periodTitle').innerText = "שבתות קדימה";
+    let sat = new Date(); sat.setDate(sat.getDate() + (6 - sat.getDay()));
+    
+    let html = "";
+    for(let i=0; i<10; i++) {
+        let d = new Date(sat); d.setDate(sat.getDate() + (i*7));
+        let dKey = d.toISOString().split('T')[0];
+        let p = PARASHOT[dKey] || "השבוע";
+        html += `
+            <div class="card p-6 flex justify-between items-center cursor-pointer hover:bg-blue-50" onclick="window.location.href='daily.html?date=${dKey}'">
+                <div><div class="text-2xl font-black text-slate-800">שבת פרשת ${p}</div>
+                <div class="text-blue-600 font-bold">${d.toLocaleDateString('he-IL')}</div></div>
+                <div class="text-blue-600 font-black">צפה בשיבוץ ◀</div>
+            </div>`;
+    }
+    grid.innerHTML = html;
+}
