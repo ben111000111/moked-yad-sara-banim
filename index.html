@@ -8,40 +8,40 @@
     <style>
         body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; color: #1e293b; }
         * { font-style: normal !important; }
-        .slot-btn { @apply w-full mb-1.5 py-2.5 rounded-xl font-bold text-[13px] border transition-all shadow-sm; }
+        .slot-btn { @apply w-full mb-1.5 py-2.5 rounded-xl font-bold text-[13px] border transition-all shadow-sm flex items-center justify-center gap-2; }
         .slot-free { @apply border-slate-200 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600; }
-        .slot-taken { @apply bg-blue-600 border-blue-700 text-white font-bold; }
-        .card { @apply bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col; }
+        .slot-taken { @apply bg-blue-600 border-blue-700 text-white font-bold shadow-md; }
+        .card { @apply bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full; }
     </style>
 </head>
 <body class="min-h-screen pb-20">
     <script>if(localStorage.getItem('user_auth') !== 'true') window.location.replace('login.html');</script>
 
     <header class="bg-white border-b-2 p-5 sticky top-0 z-50 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-4 text-right">
-            <img id="headerLogo" class="h-14">
-            <h1 id="welcomeMsg" class="text-lg font-black text-slate-800 leading-none">שלום...</h1>
+        <div class="flex items-center gap-4">
+            <img id="headerLogo" class="h-14" alt="לוגו">
+            <h1 id="welcomeMsg" class="text-lg font-black text-slate-800">שלום...</h1>
         </div>
         <nav class="flex gap-2">
-            <a href="index.html" class="px-3 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs">בית</a>
-            <a href="sabbaths.html" class="px-3 py-2 bg-white border rounded-xl font-bold text-xs text-slate-600">שבתות</a>
+            <a href="index.html" class="px-3 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-lg">בית</a>
+            <a href="sabbaths.html" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs text-slate-600">שבתות</a>
             <a href="profile.html" class="px-3 py-2 bg-slate-50 border border-blue-100 rounded-xl font-bold text-xs text-blue-700">פרופיל</a>
         </nav>
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-8 text-right">
         <div class="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl border shadow-sm">
-            <button onclick="changeWeek(-1)" class="w-10 h-10 border rounded-full font-bold">◀</button>
+            <button onclick="changeWeek(-1)" class="w-10 h-10 border-2 rounded-full font-bold hover:bg-slate-50">◀</button>
             <div class="text-center">
                 <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">סידור עבודה שבועי</h2>
-                <div id="parashaBadge" class="text-blue-600 font-extrabold text-sm uppercase">טוען...</div>
+                <div id="parashaBadge" class="text-blue-600 font-extrabold text-sm uppercase mt-1">טוען מועד...</div>
             </div>
-            <button onclick="changeWeek(1)" class="w-10 h-10 border rounded-full font-bold">▶</button>
+            <button onclick="changeWeek(1)" class="w-10 h-10 border-2 rounded-full font-bold hover:bg-slate-50">▶</button>
         </div>
 
         <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6"></div>
 
-        <div id="weekendGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t-2 border-slate-100"></div>
+        <div id="weekendGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t-2 border-slate-100"></div>
     </main>
 
     <script src="config.js"></script>
@@ -49,19 +49,29 @@
         let db = [], anchor = new Date();
         document.getElementById('headerLogo').src = CONFIG.LOGO_FILENAME;
 
-        function updateParashaName(d) {
-            let s = new Date(d);
-            s.setDate(d.getDate() + (6 - d.getDay()));
-            const k = s.toISOString().split('T')[0];
-            const n = PARASHOT_DB[k] || "פרשת השבוע";
-            document.getElementById('parashaBadge').innerText = n.includes("ערב") || n.includes("חוה\"מ") ? `שבת ${n}` : `שבת פרשת ${n}`;
+        async function updateHeader(d) {
+            let sat = new Date(d); sat.setDate(d.getDate() + (6 - d.getDay()));
+            const k = sat.toISOString().split('T')[0];
+            
+            // ניסיון טעינה מהמאגר או מ-API להשלמה
+            let name = PARASHOT_DB[k];
+            if (!name) {
+                try {
+                    const r = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&year=${sat.getFullYear()}&month=${sat.getMonth()+1}`);
+                    const data = await r.json();
+                    const item = data.items.find(i => i.date === k);
+                    name = item ? item.hebrew : "פרשת השבוע";
+                } catch(e) { name = "פרשת השבוע"; }
+            }
+            document.getElementById('parashaBadge').innerText = getEventDisplayName(k, name);
         }
 
         async function load() {
-            updateParashaName(anchor);
+            updateHeader(anchor);
             try {
                 const r = await fetch(CONFIG.SCRIPT_URL);
-                db = await r.json();
+                const data = await r.json();
+                db = data.schedule || data;
                 render();
             } catch(e) { console.error(e); }
         }
@@ -69,55 +79,39 @@
         function render() {
             const mainGrid = document.getElementById('mainGrid');
             const weekendGrid = document.getElementById('weekendGrid');
-            let sun = new Date(anchor);
-            sun.setDate(anchor.getDate() - anchor.getDay());
+            let sun = new Date(anchor); sun.setDate(anchor.getDate() - anchor.getDay());
 
-            // ימי חול ומוצ"ש
+            // ימי חול + מוצ"ש
             let mainHtml = "";
             const DAYS = ['מוצ"ש','ראשון','שני','שלישי','רביעי','חמישי'];
             for(let i=0; i<6; i++) {
-                let d = new Date(sun);
-                d.setDate(sun.getDate() + (i-1));
+                let d = new Date(sun); d.setDate(sun.getDate() + (i-1));
                 let k = d.toISOString().split('T')[0];
                 mainHtml += `<div class="card">
-                    <div class="text-center border-b pb-2 mb-3">
-                        <div class="font-black text-slate-700">${DAYS[i]}</div>
-                        <div class="text-[9px] text-blue-500 font-bold">${d.getDate()}/${d.getMonth()+1}</div>
-                    </div>`;
-                if(DAYS[i] === 'מוצ"ש') {
-                    mainHtml += renderSlot(k, 'night', 'לילה');
-                } else {
-                    mainHtml += renderSlot(k, 'morn', 'בוקר');
-                    mainHtml += renderSlot(k, 'eve', 'ערב');
-                    mainHtml += renderSlot(k, 'night', 'לילה');
-                }
+                    <div class="text-center border-b pb-2 mb-3"><div class="font-black text-slate-700">${DAYS[i]}</div><div class="text-[9px] text-blue-500 font-bold">${d.getDate()}/${d.getMonth()+1}</div></div>`;
+                if(DAYS[i] === 'מוצ"ש') mainHtml += slot(k, 'night', 'לילה');
+                else { mainHtml += slot(k, 'morn', 'בוקר') + slot(k, 'eve', 'ערב') + slot(k, 'night', 'לילה'); }
                 mainHtml += `</div>`;
             }
             mainGrid.innerHTML = mainHtml;
 
-            // שישי ושבת
+            // סופ"ש
             let fri = new Date(sun); fri.setDate(sun.getDate() + 5);
             let sat = new Date(sun); sat.setDate(sun.getDate() + 6);
             weekendGrid.innerHTML = `
                 <div class="card bg-emerald-50/30 border-emerald-100">
-                    <div class="text-center border-b border-emerald-100 pb-2 mb-3 font-black text-emerald-800">יום שישי (8-12)</div>
-                    ${renderSlot(fri.toISOString().split('T')[0], 'fri_morn', 'בוקר')}
+                    <div class="text-center border-b border-emerald-100 pb-2 mb-3 font-black text-emerald-800">יום שישי (8:00-12:00)</div>
+                    ${slot(fri.toISOString().split('T')[0], 'fri_morn', 'בוקר')}
                 </div>
                 <div class="card bg-blue-50/30 border-blue-100">
                     <div class="text-center border-b border-blue-100 pb-2 mb-3 font-black text-blue-800">שבת קודש</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        ${renderSlot(sat.toISOString().split('T')[0], 'sat_morn', 'בוקר')}
-                        ${renderSlot(sat.toISOString().split('T')[0], 'sat_night', 'לילה')}
-                    </div>
+                    <div class="grid grid-cols-2 gap-2">${slot(sat.toISOString().split('T')[0], 'sat_morn', 'בוקר')} ${slot(sat.toISOString().split('T')[0], 'sat_night', 'לילה')}</div>
                 </div>`;
         }
 
-        function renderSlot(d, s, n) {
-            const b = (db.schedule || db).find(x => x.תאריך === d && x.סוג_משמרת === s);
-            return `<div class="mb-3">
-                <div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${n}</div>
-                <button class="slot-btn ${b?'slot-taken':'slot-free'}">${b?b.שם_מוקדן:'+ פנוי'}</button>
-            </div>`;
+        function slot(d, s, n) {
+            const b = db.find(x => x.תאריך === d && x.סוג_משמרת === s);
+            return `<div class="mb-3"><div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">${n}</div><button class="slot-btn ${b?'slot-taken':'slot-free'}">${b?b.שם_מוקדן:'+ פנוי'}</button></div>`;
         }
 
         function changeWeek(d) { anchor.setDate(anchor.getDate()+(7*d)); load(); }
