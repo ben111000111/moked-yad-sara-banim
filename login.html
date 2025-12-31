@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>כניסה | מוקד יד שרה</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 font-['Assistant'] flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
+        <div class="text-center mb-6">
+            <img src="logo.png" alt="לוגו" class="h-20 mx-auto mb-4">
+            <h1 id="authTitle" class="text-2xl font-black text-slate-800">כניסה למערכת</h1>
+        </div>
+        
+        <form id="authForm" class="space-y-4">
+            <input type="text" id="username" placeholder="שם מלא" class="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500" required>
+            <input type="password" id="password" placeholder="סיסמה" class="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500" required>
+            
+            <div id="registerFields" class="hidden space-y-4">
+                <input type="tel" id="regPhone" placeholder="טלפון" class="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500">
+                <input type="email" id="email" placeholder="אימייל" class="w-full p-3 rounded-xl border border-slate-200 font-bold bg-slate-50 outline-none focus:ring-2 ring-blue-500">
+            </div>
+            
+            <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">התחברות</button>
+        </form>
+        
+        <button onclick="toggleAuth()" id="toggleBtn" class="w-full mt-4 text-slate-500 font-bold text-sm">אין לך חשבון? הירשם כאן</button>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvsxblLid--zFr8ehMQcXnavcyiFlvaXA5s4yfqfADsyWJGYoQAR2u1GUfPafEw7pR/exec";
+        let isRegister = false;
+
+        function toggleAuth() {
+            isRegister = !isRegister;
+            document.getElementById('authTitle').innerText = isRegister ? 'רישום מוקדן' : 'כניסה למערכת';
+            document.getElementById('registerFields').classList.toggle('hidden');
+            document.getElementById('submitBtn').innerText = isRegister ? 'בצע רישום' : 'התחברות';
+        }
+
+        document.getElementById('authForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (isRegister) {
+                const phone = document.getElementById('regPhone').value;
+                const email = document.getElementById('email').value;
+                
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'register', name, password: pass, phone, email })
+                });
+                
+                localStorage.setItem('user_profile', JSON.stringify({ name, phone }));
+                alert('נרשמת בהצלחה!');
+            }
+            
+            localStorage.setItem('user_auth', 'true');
+            window.location.href = 'index.html';
+        };
+    </script>
+</body>
+</html>
